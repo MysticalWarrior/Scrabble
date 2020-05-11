@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,45 +21,35 @@ namespace Scrabble
     /// </summary>
     public partial class MainWindow : Window
     {
-        public char[] playerHand;
+        private char[] _playerHand;
+        public char[] playerHand
+        {
+            get { return _playerHand; }
+            set
+            {
+                if (validWords != null) {
+                    _playerHand = value;
+                    updateWords(); }
+            }
+        }
         public string[] validWords;
+        private DataExport export;
         public MainWindow()
         {
             InitializeComponent();
             playerHand = new char[7];
-            validWords = pullDataFromWeb();
-            MessageBox.Show(validWords.Length.ToString());
-
+            export = new DataExport("export.txt");
+            validWords = pullWordsFromWeb();
+            //MessageBox.Show(validWords.Length.ToString());
+            
+            ///Sets the inital tiles, if needed.
+            //txtInput.Text = "zzzzzzz";
+            txtInput.Text = "eninej ";
         }
 
-        private void btnRun_Click(object sender, RoutedEventArgs e)
+        private string[] pullWordsFromWeb()
         {
-            int validWordCounter = 0;
-            try
-            {
-                //copies the first seven letters of the input textbox to the player hand.
-                playerHand = txtInput.Text.Substring(0, 7).ToCharArray();
-
-                for (int i = 0; i < validWords.Length; i++)
-                {
-                    if (validWords[i].Contains(playerHand[0].ToString()))
-                    {
-                        lblOutput.Content += validWords[i] + '\r';
-                        validWordCounter++;
-                    }
-                }
-                lblOutput.Content = validWordCounter.ToString() + " playable words\r" + lblOutput.Content;
-            }
-            catch (Exception)
-            {
-
-                throw new Exception("unable to obtain tiles from input");
-            }
-        }
-
-        private string[] pullDataFromWeb()
-        {
-            List<string> temp = new List<string>();
+            List<string> Words = new List<string>();
             try
             {
                 System.Net.WebClient wc = new System.Net.WebClient();
@@ -66,14 +57,69 @@ namespace Scrabble
                 while (!sr.EndOfStream)
                 {
                     string line = sr.ReadLine();
-                    temp.Add(line);
-                    //MessageBox.Show(line + " " + temp[(temp.Count() - 1)]);
+                    if (line.Length <= 7) { Words.Add(line); export.writeLine(line); }
                 }
                 sr.Close();
             }
             catch (Exception) { MessageBox.Show("Error reading words from web-based file"); throw; }
 
-            return temp.ToArray();
+            //returns the list, converted to an array.
+            return Words.ToArray();
+        }
+
+        private bool checkWord(string word)
+        {
+            for (int i = 0; i < 7; i++)
+            {
+                if (word.Contains(playerHand[i]))
+                {
+                    word = word.Remove(word.IndexOf(playerHand[i]), 1);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            if (word == "") { return true; }
+
+            //returns false if all letters couldnt be removed by tiles
+            return false;
+        }
+
+        private void txtInput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (txtInput.Text.Length == 7)
+            {
+                //copies the first seven letters of the input textbox to the player hand.
+                playerHand = txtInput.Text.ToCharArray();
+            }
+        }
+
+        private void updateWords()
+        {
+            DateTime timerStart = DateTime.Now;
+
+            int validWordCounter = 0;
+            string wordOut = "";
+
+            for (int i = 0; i < validWords.Length; i++)
+            {
+                if (checkWord(validWords[i]))
+                {
+                    wordOut += validWords[i] + '\r';
+                    validWordCounter++;
+                }
+            }
+            TimeSpan timer = DateTime.Now - timerStart;
+
+            lblOutput.Content = validWordCounter.ToString() + " playable words\rTime to run: " + timer.TotalMilliseconds + " ms\r" + wordOut;
+            ///shows a second timer
+            //MessageBox.Show("updateWords() time: " + (DateTime.Now - timerStart).TotalMilliseconds);
+        }
+
+        private void _menuOpenExport_Click(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("export.txt");
         }
     }
 }

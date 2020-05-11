@@ -7,10 +7,15 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem x:Name="menuOpenExport" Click="_menuOpenExport_Click" Header="_Export"/>
+        </Menu>
+        <ScrollViewer>
         <StackPanel>
-            <TextBox x:Name="txtInput" AcceptsReturn="False" Text="zzzzzzz"/>
-            <Button x:Name="btnRun" Content="Run" Click="btnRun_Click"/>
+            <TextBox x:Name="txtInput" AcceptsReturn="False" Text="" TextChanged="txtInput_TextChanged" MaxLength="7"/>
+           <!-- <Button x:Name="btnRun" Content="Run" Click="btnRun_Click"/>-->
             <Label x:Name="lblOutput"/>
         </StackPanel>
+        </ScrollViewer>
     </DockPanel>
 </Window>
