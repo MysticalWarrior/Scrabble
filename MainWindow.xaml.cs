@@ -21,6 +21,7 @@ namespace Scrabble
     /// </summary>
     public partial class MainWindow : Window
     {
+        public DateTime timerStart;
         private char[] _playerHand;
         public char[] playerHand
         {
@@ -28,8 +29,12 @@ namespace Scrabble
             set
             {
                 if (validWords != null) {
+
+                    timerStart = DateTime.Now;
                     _playerHand = value;
-                    updateWords(); }
+                    updateWords();
+                    //MessageBox.Show("updateWords() time: " + (DateTime.Now - timerStart).TotalMilliseconds);
+                }
             }
         }
         public string[] validWords;
@@ -40,13 +45,12 @@ namespace Scrabble
             playerHand = new char[7];
             export = new DataExport("export.txt");
             validWords = pullWordsFromWeb();
-            //MessageBox.Show(validWords.Length.ToString());
+            //MessageBox.Show("Dictionary length: " + validWords.Length.ToString());
             
             ///Sets the inital tiles, if needed.
-            //txtInput.Text = "zzzzzzz";
-            txtInput.Text = "eninej ";
-        }
+            txtInput.Text = "ALLWORd";
 
+        }
         private string[] pullWordsFromWeb()
         {
             List<string> Words = new List<string>();
@@ -57,33 +61,45 @@ namespace Scrabble
                 while (!sr.EndOfStream)
                 {
                     string line = sr.ReadLine();
-                    if (line.Length <= 7) { Words.Add(line); export.writeLine(line); }
+                    //filters out words that are more than 7 characters long
+                    if (line.Length <= 7)
+                    {
+                        Words.Add(line);
+                        export.writeLine(line);
+                    }
                 }
-                sr.Close();
+            sr.Close();
             }
-            catch (Exception) { MessageBox.Show("Error reading words from web-based file"); throw; }
+            catch (Exception) { MessageBox.Show("Error initializing dictionary"); }
 
             //returns the list, converted to an array.
             return Words.ToArray();
         }
 
-        private bool checkWord(string word)
+        private bool checkWord(string wordtocheck)
         {
+            string word = wordtocheck.ToUpper();
+
+            int numberRemovedByWild = 0;
             for (int i = 0; i < 7; i++)
             {
-                if (word.Contains(playerHand[i]))
+                if (word.Length == 0) { break; }
+                /*if (word[0] == char.ToUpper(playerHand[i]))
+                {
+                    word = word.Remove(0,1);
+                }*/
+                else if (word.Contains(playerHand[i]))
                 {
                     word = word.Remove(word.IndexOf(playerHand[i]), 1);
                 }
-                else
+                else if (playerHand[i] == ' ')
                 {
-                    break;
+                    numberRemovedByWild++;
                 }
             }
             if (word == "") { return true; }
-
-            //returns false if all letters couldnt be removed by tiles
-            return false;
+            else if (word.Length <= numberRemovedByWild) { return true; }
+            else { return false; }
         }
 
         private void txtInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -91,35 +107,49 @@ namespace Scrabble
             if (txtInput.Text.Length == 7)
             {
                 //copies the first seven letters of the input textbox to the player hand.
-                playerHand = txtInput.Text.ToCharArray();
+                playerHand = txtInput.Text.ToUpper().ToCharArray();
             }
         }
 
         private void updateWords()
         {
-            DateTime timerStart = DateTime.Now;
-
+            //timerStart = DateTime.Now;
             int validWordCounter = 0;
-            string wordOut = "";
+            string wordsOut = "";
 
+            
             for (int i = 0; i < validWords.Length; i++)
             {
                 if (checkWord(validWords[i]))
                 {
-                    wordOut += validWords[i] + '\r';
+                    wordsOut += validWords[i] + '\r';
+                    validWordCounter++;
+                }
+                //pBar.Value = i;
+            }
+            if (txtInput.Text == "ALLWORD")
+            {
+                validWordCounter = 0;
+                wordsOut = "";
+                for (int i = 0; i < validWords.Length; i++)
+                {
+                    wordsOut += validWords[i] + '\r';
                     validWordCounter++;
                 }
             }
-            TimeSpan timer = DateTime.Now - timerStart;
-
-            lblOutput.Content = validWordCounter.ToString() + " playable words\rTime to run: " + timer.TotalMilliseconds + " ms\r" + wordOut;
-            ///shows a second timer
-            //MessageBox.Show("updateWords() time: " + (DateTime.Now - timerStart).TotalMilliseconds);
+            lblOutput.Content = validWordCounter.ToString() + " playable words\rTime to run: " + (DateTime.Now - timerStart).TotalMilliseconds + " ms\r" + wordsOut;
+            //lblOutput.Text = validWordCounter.ToString() + " playable words\rTime to run: " + (DateTime.Now - timerStart).TotalMilliseconds + " ms\r" + wordsOut;
         }
 
         private void _menuOpenExport_Click(object sender, RoutedEventArgs e)
         {
             System.Diagnostics.Process.Start("export.txt");
+        }
+
+        private void btnRun_Click(object sender, RoutedEventArgs e)
+        {
+            //debugging tool for reworking stackpanel
+            MessageBox.Show("stackpanel height: " + spOutput.Height.ToString() + "\rstackpanel rendered height: " + spOutput.ActualHeight.ToString());
         }
     }
 }

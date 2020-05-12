@@ -9,13 +9,13 @@
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem x:Name="menuOpenExport" Click="_menuOpenExport_Click" Header="_Export"/>
+            <TextBox x:Name="txtInput" AcceptsReturn="False" Text="" TextChanged="txtInput_TextChanged" MaxLength="7" Width="100"/>
         </Menu>
         <ScrollViewer>
-        <StackPanel>
-            <TextBox x:Name="txtInput" AcceptsReturn="False" Text="" TextChanged="txtInput_TextChanged" MaxLength="7"/>
-           <!-- <Button x:Name="btnRun" Content="Run" Click="btnRun_Click"/>-->
-            <Label x:Name="lblOutput"/>
-        </StackPanel>
+            <StackPanel x:Name="spOutput">
+                <Button x:Name="btnRun" Content="Run" Click="btnRun_Click"/>
+                <Label x:Name="lblOutput"/>
+            </StackPanel>
         </ScrollViewer>
     </DockPanel>
 </Window>
